@@ -1,0 +1,110 @@
+---
+title: "HW2"
+author: "Chandler Scott-Smith"
+date: "2022-09-02"
+output: html_document
+---
+# 1: 1. Import class one survey data from our Github site (https://github.com/kijohnson/ADA) (The dataset is called ‘Class 1 Survey Fall 2022.csv’), calling the R dataframe that you create C1survey.
+```{r, chunk 1}
+#Using pacman package to help with installing and loading needed packages
+pacman::p_load(haven, readr, dplyr, openxlsx)
+# Importing data set from Github and naming "C1survey":
+C1survey <-read_csv("https://raw.githubusercontent.com/kijohnson/ADA/master/Class%201%20Survey%20Fall%202022.csv")
+```
+
+# 2. Determine: a. the number of observations (i.e. the number of people who filled out the survey) and b. the number of variables in the dataframe.
+```{r, chunk 2}
+# Using "dim" to get a summary of the dataframe. There are 42 observations and 27 variables. This can use be found in the environment tab:
+dim(C1survey)
+```
+# 3. a. Rename the column variables to something shorter and that is descriptive of what the variable is about (for example like_dogs for the ‘Do you like dogs?’ question variable) and b. Display that they are renamed.
+```{r, chunk 3}
+#Renaming variables in order of appearance, excluding column 1 (ID variable):
+names(C1survey)[2:27]<-c("cats_opinion", "dogs_opinion", "island_item", "slogan",
+                         "day_favorite", "bird_type", "food_favorite", "drink_favorite", 
+                         "season_favorite", "month_favorite", "hobby_favorite", "degree", 
+                         "specialization", "stat_software", "R_experience", "comfort_coding", 
+                         "time_coding", "class_hopes", "PH_interests", "number_favorite", "day_birth", 
+                         "month_birth", "country_home", "state_home", "city_home", "edu_level") 
+#Displaying renamed columns:
+colnames(C1survey) 
+```
+
+# 4. Write code to determine and display the number of factor, integer, numerical, and character variables there are in the C1survey dataset.
+```{r, chunk 4}
+#Using "sapply" to summarize the types of variables in the sataset:
+sapply(C1survey, typeof)
+#There are four numeric variables and the rest are charactor variables
+```
+# 5. a. Using code, check the bday and bmonth variables for any unusual or missing values. If you find any, b. describe what you will do with the unusual values in a comment before or immediately following the code that does it, and c. after you have cleaned up any unusual values, find the median bday and month. *Note: please make sure that your bday and month variables are numeric before doing statistics
+```{r, chunk 5}
+#Checking that day_birth and month_birth are numeric before continuing:
+class(C1survey$day_birth)
+class(C1survey$month_birth)
+#Both variables are charactor and will need to be reviewed before proceding. Using "glimpse" to get a better idea of what these variables look like:
+glimpse(C1survey)
+#Right away I see that there is a data point in "month_birth" that is not numeric (October spelled out). This data point and all others like it will need to be dealt with in order to use the variable as numeric. I am going to convert both "day_birth" and "month_birth" to numeric below: 
+C1survey$day_birth<-as.numeric(C1survey$day_birth) 
+C1survey$month_birth<-as.numeric(C1survey$month_birth) 
+#checking to make sure the classes changes correctly:
+class(C1survey$day_birth)
+class(C1survey$month_birth) 
+
+#Now I am going to summarize these two variables and get some statistics on them:
+summary(C1survey$day_birth) #median birthday is 18
+summary(C1survey$month_birth) #median birth month is 7
+
+```
+
+# 6. a. Create a new variable called bseason that gives the season according to Northern Meteorological season in which respondents were born (winter=12/1 to 2/29, spring=3/1 to 5/31, summer=6/1 to 8/31, fall=9/1 to 11/30). b. Using the table function, print a table of Seasons in the columns and bmonths in the rows that allows you to check that the coding is correct c. Sum the columns using the addmargins function to answer the question of how many classmates were born in each season? Include your answer in the code.
+```{r, chunk 6}
+#creating new variable "bseason". First making a new dataframe called "C1survey_1" to keep orininal intact:
+C1survey_1 <- C1survey
+#creating new column in dataframe "bseason":
+C1survey_1$bseason <- C1survey_1$month_birth
+#using "ifesle" to categorize the numeric months into seasons:
+C1survey_1$bseason <- as.factor(ifelse(C1survey_1$bseason<3, 'winter',
+                               ifelse(C1survey_1$bseason<6, 'spring',
+                               ifelse(C1survey_1$bseason<9, 'summer',
+                               ifelse(C1survey_1$bseason<12, 'fall', 'winter')))))
+#creating a table to display birth months and seasons:
+tab <- table(C1survey_1$month_birth, C1survey_1$bseason)
+#displaying table:
+tab
+#creating table margin sums:
+tab_sum <- addmargins(tab, FUN = sum)
+#displaying new table with margins:
+tab_sum
+
+## We have 10 classmates born in fall, 7 in spring, 11 in summer, and 9 in winter                             
+                      
+```
+
+# 7. Pick your favorite variable to analyze, come up with a question you want to answer with that variable, generate the code, and provide an answer to your question. Describe what you did using comments (i.e. #’s).
+
+```{r}
+#I am curious how well one's birth day can pridict their favorite number. To start, I create a new variable column that equals birthday minus favorite number:
+
+C1survey_1$num_fav_birth <- C1survey_1$day_birth - C1survey_1$number_favorite
+
+#Next, I use "ifelse" to categorize the data into favorite number = "more", "exact", or "less" than birthday
+C1survey_1$num_fav_birth_cat <- as.factor(ifelse(C1survey_1$num_fav_birth<=-1, 'More',
+                               ifelse(C1survey_1$num_fav_birth<=0, 'Exact',
+                               ifelse(C1survey_1$num_fav_birth>=1, 'Less', NA))))
+
+#Now, I summarize the results:
+summary(C1survey_1$num_fav_birth_cat)
+
+#of the 39 data points included, 9 people's favorite number is the same as their birthday, for 19 it is less, for 11 it is more. Not too bad! A pretty useful tool for prediction.
+
+#Here is a simple histogram to view the frequency of each occurance:
+hist(C1survey_1$num_fav_birth)
+
+```
+
+
+
+
+
+
+
